@@ -2,6 +2,8 @@ cubes:
   - name: products
     sql: SELECT * FROM 's3://cube-tutorial/products.csv'
     public: false
+	
+    joins: []
 
     dimensions:
       - name: id

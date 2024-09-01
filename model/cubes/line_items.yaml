@@ -5,7 +5,7 @@ cubes:
 
     joins:
       - name: products
-        sql: "{CUBE.product_id} = {products.id}"
+        sql: "{CUBE}.product_id = products.id"
         relationship: many_to_one
 
     dimensions:
