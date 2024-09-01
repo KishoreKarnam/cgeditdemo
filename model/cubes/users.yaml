@@ -4,7 +4,7 @@ cubes:
     public: false
     joins:
       - name: products
-        sql: '{CUBE}.id=products.id'
+        sql: '{CUBE}.id=products.id AND {CUBE}.first_name=products.name'
         relationship: one_to_many
     dimensions:
       - name: id

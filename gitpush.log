@@ -21,3 +21,10 @@ fatal: Could not read from remote repository.
 
 Please make sure you have the correct access rights
 and the repository exists.
+On branch master
+Your branch is ahead of 'origin/master' by 5 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+To github.com:KishoreKarnam/cgeditdemo.git
+   9937cb7..afc6dca  master -> master
