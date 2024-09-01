@@ -16,5 +16,6 @@ current_datetime=$(date "+%Y-%m-%d %H:%M:%S")
 commit_message="committed on $current_datetime"
 git commit -m "$commit_message"
 # Push the changes to the GitHub repository
-git push origin master
+git push
+
 
