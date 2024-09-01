@@ -1,108 +1,67 @@
-# Cubes represent tables of data in Cube.
-# Learm more: https://cube.dev/docs/reference/data-model/cube
 cubes:
-  - name: base_orders
-
-    # DuckDB is used as the data source: https://cube.dev/docs/product/configuration/data-sources/duckdb
-    # DuckDB allows querying data from AWS S3 in the following fashion
-    sql: SELECT * FROM 's3://cube-tutorial/orders.csv'
-
-    # It's recommended that cubes remain private.
-    # Only views should be exposed to BI and data visualization tools
+  - name: line_items
+    sql: SELECT * FROM 's3://cube-tutorial/line_items.csv'
     public: false
 
-    # Joins define relationships between cubes.
-    # Learn more: https://cube.dev/docs/product/data-modeling/concepts/working-with-joins
     joins:
-      - name: line_items
-        sql: '{CUBE.id} = {line_items.order_id}'
-        relationship: one_to_many
-      - name: users
-        sql: "{CUBE.user_id} = {users.id}"
+      - name: products
+        sql: "{CUBE.product_id} = {products.id}"
         relationship: many_to_one
 
-    # Dimensions represent the properties of a single data point in the cube.
-    # Learn more: https://cube.dev/docs/reference/data-model/dimensions
     dimensions:
       - name: id
         sql: id
         type: number
         primary_key: true
 
-      - name: user_id
-        sql: user_id
+      - name: order_id
+        sql: order_id
         type: number
         public: false
 
-      - name: status
-        sql: status
-        type: string
+      - name: product_id
+        sql: product_id
+        type: number
+        public: false
 
-      - name: created_at
-        sql: "{CUBE}.created_at::TIMESTAMP"
-        type: time
+      # `sql` properties can contain any SQL expressions supported by the data source.
+      # Below, the value of the 'price' column is cast to the DECIMAL type
+      - name: price
+        sql: "price::DECIMAL"
+        type: number
+        format: currency
 
-      - name: completed_at
-        sql: "{CUBE}.completed_at::TIMESTAMP"
-        type: time
-
-    # Measures represent the properties of a set of data points in the cube.
-    # Learn more: https://cube.dev/docs/reference/data-model/measures
     measures:
       - name: count
         type: count
 
-      - name: completed_count
-        type: count
-        filters:
-          - sql: "{CUBE}.status = 'completed'"
+      - name: sum_price
+        sql: "{price}"
+        type: sum
+        public: false
 
-      # Calculated measures can reference other measures.
-      # Learn more: https://cube.dev/docs/reference/data-model/measures#calculated-measures
-      - name: completed_percentage
-        sql: "({completed_count} / NULLIF({count}, 0)) * 100.0"
+        # This measure calculates the average price of line items.
+        # It surely could've been defined in the following, simpler way:
+        #   - name: avg_price
+        #     sql: "{price}"
+        #     type: avg
+        # However, for performance, it's better to decompose it into a formula with additive measures.
+        # Learn more: https://cube.dev/docs/guides/recipes/query-acceleration/non-additivity
+      - name: avg_price
+        sql: "{sum_price} / {count}"
         type: number
-        format: percent
 
-      - name: total
-        type: count
-        rolling_window:
-          trailing: unbounded
+        # This measure calculates a 'minimum..maximum' price range and renders it as a string.
+        # Just like dimensions, measures can have various types, including 'string', 'time', and 'boolean'.
+        # Learn more: https://cube.dev/docs/reference/data-model/types-and-formats#measure-types
+      - name: price_range
+        sql: "FLOOR(MIN({price})) || '..' || CEIL(MAX({price}))"
+        type: string
 
-      # Jinja can be used to remove code duplication and add dynamicity into the data model.
-      # Here, a dictionary of 'metrics' is iterated over to create three rolling_window measures.
-      # Learn more: https://cube.dev/docs/product/data-modeling/dynamic/jinja
-      {% set metrics = {
-        'dau': '1 day',
-        'wau': '1 week',
-        'mau': '1 month'
-      } %}
-      {% for name, window in metrics | items %}
-      - name: {{ name }}
-        sql: user_id
-        type: count_distinct
-        rolling_window:
-          trailing: {{ window }}
-      {% endfor %}
-
-    # Pre-aggregations accelerate queries by calculating and storing the data in advance.
-    # Learn more: https://cube.dev/docs/product/caching/using-pre-aggregations
-    pre_aggregations:
-      - name: orders_by_month
-        measures:
-          - count
-          - completed_count
-          - completed_percentage
-        time_dimension: created_at
-        granularity: month
-
-        # Below, a pre-aggregation includes dimensions and measures from this and other cubes.
-        # It's totally fine if there's a join defined between these cubes
-      - name: orders_and_line_items_of_users
-        measures:
-          - count
-          - line_items.count
-          - line_items.sum_price
-        dimensions:
-          - users.gender
-          - users.state
+        # This measure calculates the number of products based on the distinct values in the 'product_id' column.
+        # Try querying 'line_items.product_count' and 'products.count'; they might yield different results.
+        # 'count_distinct_approx' is useful for its trade-off between precision and performance.
+        # Learn more: https://cube.dev/docs/reference/data-model/types-and-formats#count_distinct_approx
+      - name: product_count
+        sql: product_id
+        type: count_distinct_approx
