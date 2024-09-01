@@ -17,7 +17,9 @@ cubes:
       - name: line_items
         sql: '{CUBE.id} = {line_items.order_id}'
         relationship: one_to_many
-
+      - name: users
+        sql: "{CUBE.user_id} = {users.id}"
+        relationship: many_to_one
 
     # Dimensions represent the properties of a single data point in the cube.
     # Learn more: https://cube.dev/docs/reference/data-model/dimensions
