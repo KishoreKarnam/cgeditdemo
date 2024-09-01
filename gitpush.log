@@ -1,0 +1,9 @@
+[master ff796b7] committed on 2024-09-01 17:38:02
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+ create mode 100644 gitpush.log
+git@github.com: Permission denied (publickey).
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+/bin/sh: line 1: root: command not found
