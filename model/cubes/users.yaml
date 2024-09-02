@@ -2,10 +2,7 @@ cubes:
   - name: users
     sql: SELECT * FROM 's3://cube-tutorial/users.csv'
     public: false
-    joins:
-      - name: products
-        sql: '{CUBE}.id=products.id AND {CUBE}.first_name=products.name'
-        relationship: one_to_many
+    joins: []
     dimensions:
       - name: id
         sql: id
