@@ -9,9 +9,6 @@ cubes:
       - name: line_items
         sql: '{CUBE}.id=line_items.id AND {CUBE}.status=line_items.product_id'
         relationship: one_to_many
-      - name: users
-        sql: '{CUBE}.id=users.id'
-        relationship: one_to_many
     dimensions:
       - name: id
         sql: id
